@@ -1,0 +1,22 @@
+{
+  "name": "aegis-vault-solana",
+  "version": "1.0.0",
+  "description": "Playful Dual-Lock AI Prompt Defense Vault on Solana",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "tsx tests/vault.test.ts",
+    "start": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.98.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.7",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
