@@ -1,7 +1,7 @@
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { SplitResult } from './types.js';
 
-export const OPERATOR_WALLET = "2nNtE6uEJQjX5vN1cS1m4FBRDuxxqq2hwmtFqn92xkNd";
+export const OPERATOR_WALLET = process.env.OPERATOR_WALLET || process.env.TREASURY_PUBKEY || "GPnfvrNrro1PJTbN4moGkTwtJm3iqywLDZnAYY7pco52";
 export const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 
 export function calculateFee(attemptCount: number): number {

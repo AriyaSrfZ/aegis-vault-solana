@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0c0a">
+  <title>Aegis Vault — OMNI//GRID</title>
+  <meta name="description" content="Talk the vault open: convince the WARDEN judge, get past the REFEREE, win the pot.">
+  <link rel="stylesheet" href="system/omni.css?v=5">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="system/omni.js?v=5" defer></script>
+  <script src="system/cloud.js?v=5" defer></script>
+  <style>
+    .page { max-width: 1180px; margin: 0 auto; padding: 0 var(--s4) calc(120px + var(--safe-bottom)); }
+    .bar-title { font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; }
+    .stage { height: min(46vh, 420px); margin: 0 calc(var(--s4) * -1); }
+    .stage .og-cloud-fallback { z-index: 0; }
+    .intro { position: relative; margin-top: calc(var(--s7) * -1); display: grid; gap: var(--s4); }
+    .intro .og-body { max-width: 52ch; }
+    .layout { display: grid; gap: var(--s5); margin-top: var(--s6); }
+    @media (min-width: 960px) {
+      .stage { height: 520px; }
+      .layout { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; }
+      .intro { margin-top: -120px; }
+    }
+    .og-panel { padding: var(--s5); }
+    .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s4); }
+    label.og-headline { display: block; }
+    textarea.og-field { min-height: 148px; margin-top: var(--s3); }
+    .meta { display: flex; justify-content: space-between; gap: var(--s3); margin-top: var(--s2); }
+    .actions { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s5); }
+    .actions .og-btn--primary { flex: 1 1 220px; }
+    .receipt, .verdict { margin-top: var(--s5); }
+    .receipt[hidden], .verdict[hidden] { display: none; }
+    .receipt .og-facts { margin-top: var(--s3); }
+    .split { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: var(--s4); background: var(--night-3); }
+    .split span:first-child { width: 70%; background: var(--cobalt); }
+    .split span:last-child { width: 30%; background: var(--sky); opacity: 0.55; }
+    .split-legend { display: flex; justify-content: space-between; margin-top: 6px; }
+    .locks { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); margin-top: var(--s4); }
+    .lock { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s4); display: grid; gap: var(--s2); background: rgba(5, 6, 5, 0.35); transition: border-color var(--d-slow) var(--ease-out), background var(--d-slow) var(--ease-out); }
+    .lock .og-icon { width: 28px; height: 28px; color: var(--ink-3); transition: color var(--d-slow) var(--ease-out); }
+    .lock[data-state="open"] { border-color: rgba(182, 207, 151, 0.45); background: rgba(182, 207, 151, 0.06); }
+    .lock[data-state="open"] .og-icon { color: var(--gain); }
+    .lock[data-state="held"] { border-color: rgba(217, 120, 90, 0.45); background: var(--bust-soft); }
+    .lock[data-state="held"] .og-icon { color: var(--bust); }
+    .lock b { font-weight: 600; letter-spacing: 0.02em; }
+    .reason { margin-top: var(--s4); padding: var(--s4); border-radius: var(--r-md); background: rgba(5, 6, 5, 0.45); border: 1px solid var(--line); color: var(--ink); }
+    .verdict-title[data-tone="gain"] { color: var(--gain); }
+    .verdict-title[data-tone="bust"] { color: var(--bust); }
+    .history { list-style: none; margin: var(--s3) 0 0; padding: 0; display: grid; gap: 2px; }
+    .history li { display: grid; grid-template-columns: auto 1fr auto; gap: var(--s3); align-items: center; padding: var(--s3) 0; border-top: 1px solid var(--line); }
+    .history li:first-child { border-top: 0; }
+    .history .og-icon { width: 20px; height: 20px; }
+    .history .won { color: var(--gain); } .history .lost { color: var(--bust); }
+    .history p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); font-size: var(--fs-callout); }
+    .empty { color: var(--ink-3); font-size: var(--fs-callout); margin: var(--s3) 0 0; }
+    .sheet-list { margin: var(--s4) 0 0; padding-left: 1.2em; color: var(--ink-2); display: grid; gap: var(--s3); }
+    .sheet-list b { color: var(--ink); font-weight: 600; }
+    .error { color: var(--bust); font-size: var(--fs-callout); margin: var(--s3) 0 0; }
+    .error[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <header class="og-bar og-glass" style="border-radius: 0">
+    <div class="og-bar__inner">
+      <a class="og-iconbtn" href="/v2/" aria-label="Back to OMNI//GRID"><svg class="og-icon" aria-hidden="true"><use href="system/icons.svg#i-back"/></svg></a>
+      <span class="bar-title">Aegis Vault</span>
+    </div>
+    <button class="og-seal og-glass" id="rules-open" type="button">
+      <svg class="og-icon" data-draw aria-hidden="true"><use href="system/icons.svg#i-seal"/></svg>
+      How it's judged
+    </button>
+  </header>
+
+  <main class="page">
+    <div class="og-stage stage" aria-hidden="true">
+      <div class="og-cloud-fallback"></div>
+      <canvas class="og-cloud" id="cloud"></canvas>
+    </div>
+
+    <section class="intro">
+      <h1 class="og-display">Talk the vault open.</h1>
+      <p class="og-body">Argue with WARDEN, the vault's guardian, under its Charter. If WARDEN agrees to release, REFEREE checks your argument for tricks. Get past both and the whole pot is yours.</p>
+      <dl class="og-facts" aria-live="polite">
+        <div><dt>Pot</dt><dd id="pot">—</dd></div>
+        <div><dt>Fee per attempt</dt><dd id="fee">—</dd></div>
+        <div><dt>Attempts judged</dt><dd id="count">—</dd></div>
+      </dl>
+      <p class="og-caption">Devnet demo. Payments are simulated and the vault state resets when the server restarts.</p>
+    </section>
+
+    <div class="layout">
+      <section class="og-panel" aria-labelledby="argue-title">
+        <label class="og-headline" id="argue-title" for="prompt">Your argument</label>
+        <textarea class="og-field" id="prompt" maxlength="4000" placeholder="Convince WARDEN under the Charter to release the vault."></textarea>
+        <div class="meta">
+          <span class="og-caption">Plain arguments only. Fake authority, resets and role-play are caught.</span>
+          <span class="og-caption num" id="chars">0 / 4000</span>
+        </div>
+        <p class="error" id="error" role="alert" hidden></p>
+        <div class="actions">
+          <button class="og-btn og-btn--primary og-btn--lg" id="submit" type="button" disabled>
+            <svg class="og-icon" aria-hidden="true"><use href="system/icons.svg#i-send"/></svg>
+            <span id="submit-label">Submit challenge</span>
+          </button>
+          <button class="og-btn og-btn--quiet" id="reset" type="button" hidden>New argument</button>
+        </div>
+
+        <div class="receipt" id="receipt" hidden>
+          <hr class="og-rule">
+          <h2 class="og-headline" style="margin-top: var(--s5)">Challenge registered</h2>
+          <dl class="og-facts">
+            <div><dt>Attempt</dt><dd class="og-hash" id="r-id"></dd></div>
+            <div><dt>Fee</dt><dd id="r-fee"></dd></div>
+            <div><dt>Solana Pay reference</dt><dd class="og-hash" id="r-ref"></dd></div>
+          </dl>
+          <div class="split" aria-hidden="true"><span></span><span></span></div>
+          <div class="split-legend"><span class="og-caption">70% to the pot <span class="num" id="r-pot"></span></span><span class="og-caption">30% to the keeper <span class="num" id="r-keeper"></span></span></div>
+        </div>
+
+        <div class="verdict" id="verdict" hidden aria-live="polite">
+          <hr class="og-rule">
+          <h2 class="og-title verdict-title" id="v-title" style="margin-top: var(--s5)"></h2>
+          <div class="locks">
+            <div class="lock" id="lock-warden" data-state="idle">
+              <svg class="og-icon" aria-hidden="true"><use href="system/icons.svg#i-lock"/></svg>
+              <b>WARDEN</b><span class="og-caption" id="warden-note">Waiting</span>
+            </div>
+            <div class="lock" id="lock-referee" data-state="idle">
+              <svg class="og-icon" aria-hidden="true"><use href="system/icons.svg#i-lock"/></svg>
+              <b>REFEREE</b><span class="og-caption" id="referee-note">Waiting</span>
+            </div>
+          </div>
+          <p class="reason" id="v-reason"></p>
+        </div>
+      </section>
+
+      <aside class="og-panel" aria-labelledby="hist-title">
+        <div class="panel-head">
+          <h2 class="og-headline" id="hist-title">Your attempts</h2>
+          <span class="og-caption">This session</span>
+        </div>
+        <ul class="history" id="history"></ul>
+        <p class="empty" id="history-empty">No attempts yet. Your verdicts appear here.</p>
+      </aside>
+    </div>
+  </main>
+
+  <div class="og-scrim" id="scrim"></div>
+  <section class="og-sheet og-glass" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="og-sheet__grip"></div>
+    <div class="panel-head">
+      <h2 class="og-title" id="sheet-title">How it's judged</h2>
+      <button class="og-iconbtn" id="sheet-close" type="button" aria-label="Close"><svg class="og-icon" aria-hidden="true"><use href="system/icons.svg#i-close"/></svg></button>
+    </div>
+    <ol class="sheet-list">
+      <li><b>You pay the attempt fee.</b> It starts at 0.01 SOL and rises 2% per attempt, capped at 0.05 SOL. 70% goes into the pot and 30% to the keeper who runs the vault.</li>
+      <li><b>WARDEN reads your argument.</b> It refuses on fake authority, reset tokens and similar tricks, and releases only when an argument fits the Charter's duties.</li>
+      <li><b>REFEREE double-checks a release.</b> If it finds a hidden deception pattern, it overrules WARDEN.</li>
+      <li><b>Both agree, you win the pot.</b> In this devnet demo the payment and the payout are simulated; nothing moves on-chain.</li>
+    </ol>
+  </section>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const $ = id => document.getElementById(id);
+      const cloud = OmniCloud.mount($('cloud'), { shape: 'vault', dim: 0.9, scale: 0.9, offset: [0, 0.12] });
+      Omni.telegram({ hub: '/v2/' });
+      Omni.glassLight();
+      Omni.drawIcons();
+
+      const sheet = Omni.sheet($('sheet'), $('scrim'));
+      $('rules-open').addEventListener('click', () => { sheet.open(); Omni.haptic('select'); });
+      $('sheet-close').addEventListener('click', () => sheet.close());
+
+      const prompt = $('prompt'), submit = $('submit'), label = $('submit-label');
+      let stage = 'write'; // write -> registered -> judged
+      let attempt = null;
+      const history = [];
+
+      async function loadVault() {
+        try {
+          const v = await Omni.api('api/vault');
+          $('pot').textContent = `${v.potSol} SOL`;
+          $('fee').textContent = `${v.currentFeeSol} SOL`;
+          $('count').textContent = v.attemptCount;
+        } catch (e) { /* stats are informational; leave the dashes */ }
+      }
+
+      function showError(msg) { $('error').textContent = msg; $('error').hidden = !msg; }
+      function busy(on) { submit.classList.toggle('is-busy', on); submit.disabled = on || (stage === 'write' && !prompt.value.trim()); }
+
+      prompt.addEventListener('input', () => {
+        $('chars').textContent = `${prompt.value.length} / 4000`;
+        if (stage === 'write') submit.disabled = !prompt.value.trim();
+      });
+
+      function setLock(id, state, note) { $(id).dataset.state = state; $(id).querySelector('use').setAttribute('href', `system/icons.svg#i-${state === 'open' ? 'unlock' : 'lock'}`); $(id.replace('lock-', '') + '-note').textContent = note; }
+
+      async function register() {
+        const text = prompt.value.trim();
+        if (!text) return;
+        showError(''); busy(true);
+        try {
+          attempt = await Omni.api('api/challenge', { prompt: text });
+          attempt.prompt = text;
+          $('r-id').textContent = attempt.attemptId;
+          $('r-fee').textContent = `${attempt.feeSol} SOL`;
+          $('r-ref').textContent = Omni.shortHash(attempt.reference, 8);
+          $('r-ref').title = attempt.reference;
+          $('r-pot').textContent = `${attempt.potSol} SOL`;
+          $('r-keeper').textContent = `${attempt.treasurySol} SOL`;
+          $('receipt').hidden = false; $('receipt').classList.add('og-develop');
+          stage = 'registered'; prompt.readOnly = true;
+          label.textContent = 'Simulate payment and judge';
+          submit.querySelector('use').setAttribute('href', 'system/icons.svg#i-play');
+          Omni.haptic('medium');
+        } catch (e) {
+          showError(`${e.message}. Check your connection and submit again.`);
+        } finally { busy(false); }
+      }
+
+      async function judge() {
+        showError(''); busy(true);
+        $('verdict').hidden = false;
+        setLock('lock-warden', 'idle', 'Reading…'); setLock('lock-referee', 'idle', 'Waiting');
+        $('v-title').textContent = 'Judging…'; $('v-title').dataset.tone = ''; $('v-reason').textContent = '';
+        try {
+          const r = await Omni.api('api/verify', { attemptId: attempt.attemptId, prompt: attempt.prompt });
+          const won = r.verdict === 'won';
+          if (r.stage === 'warden') { setLock('lock-warden', 'held', 'Refused'); setLock('lock-referee', 'idle', 'Not reached'); }
+          else if (won) { setLock('lock-warden', 'open', 'Released'); setLock('lock-referee', 'open', 'Confirmed'); }
+          else { setLock('lock-warden', 'open', 'Released'); setLock('lock-referee', 'held', 'Overruled'); }
+          $('v-title').textContent = won ? 'The vault is open.' : r.verdict === 'rejected' ? 'Overruled by REFEREE.' : 'WARDEN holds the vault.';
+          $('v-title').dataset.tone = won ? 'gain' : 'bust';
+          $('v-reason').textContent = r.reason;
+          $('verdict').classList.remove('og-develop'); void $('verdict').offsetWidth; $('verdict').classList.add('og-develop');
+          cloud.scan(won ? 'gain' : 'bust');
+          Omni.haptic(won ? 'gain' : 'bust');
+          if (won) Omni.toast('You talked the vault open. Payout is simulated on devnet.', 'gain');
+          history.unshift({ won, text: attempt.prompt, stage: r.stage });
+          renderHistory();
+          stage = 'judged';
+          submit.hidden = true; $('reset').hidden = false; $('reset').focus();
+          loadVault();
+        } catch (e) {
+          $('v-title').textContent = 'Judging failed';
+          showError(`${e.message}. Your challenge is still registered; try judging again.`);
+        } finally { busy(false); }
+      }
+
+      function renderHistory() {
+        $('history-empty').hidden = history.length > 0;
+        $('history').innerHTML = '';
+        history.slice(0, 8).forEach(h => {
+          const li = document.createElement('li');
+          li.innerHTML = `${Omni.icon(h.won ? 'unlock' : 'lock', h.won ? 'won' : 'lost')}<p></p><span class="og-caption">${h.won ? 'Won' : h.stage === 'warden' ? 'WARDEN' : 'REFEREE'}</span>`;
+          li.querySelector('p').textContent = h.text;
+          $('history').appendChild(li);
+        });
+      }
+
+      $('reset').addEventListener('click', () => {
+        stage = 'write'; attempt = null;
+        prompt.readOnly = false; prompt.value = ''; prompt.dispatchEvent(new Event('input'));
+        $('receipt').hidden = true; $('verdict').hidden = true;
+        submit.hidden = false; $('reset').hidden = true;
+        label.textContent = 'Submit challenge';
+        submit.querySelector('use').setAttribute('href', 'system/icons.svg#i-send');
+        prompt.focus();
+      });
+
+      submit.addEventListener('click', () => (stage === 'write' ? register() : judge()));
+      renderHistory();
+      loadVault();
+    });
+  </script>
+</body>
+</html>
